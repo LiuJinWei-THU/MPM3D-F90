@@ -158,7 +158,7 @@ subroutine TLParticleInitial()
              pt%XN=(pt%Xo - cell_list(pt%icell)%Cxg)*iJacobi
              p_type = node%bd_type
              do i=1,3
-                 if(p_type(i))then
+                 if(p_type(i)/=0)then
                      if (pt%XXN(i)>0) then
                         pt%XXN(i)=1
                      else if(pt%XXN(i)<0) then
@@ -439,7 +439,7 @@ subroutine ParticleInitial()
              pt%XXN = (pt%Xp - node%Xg)*iJacobi
              p_type = node%bd_type
              do i=1,3
-                 if(p_type(i))then
+                 if(p_type(i)/=0)then
                      if (pt%XXN(i)>0) then
                         pt%XXN(i)=1
                      else if(pt%XXN(i)<0) then
@@ -1444,7 +1444,7 @@ subroutine ParticlePositionUpdate()
              node => node_list(pt%inode)
              p_type = node%bd_type
              do i = 1,3
-                 if(p_type(i)) then
+                 if(p_type(i)/=0) then
                      isinternalPoint = .false.
                      cycle
                  end if
@@ -1849,22 +1849,22 @@ subroutine UpdateDT()
 
          do p = parBegin, parEnd    ! Loop over all particles (1)
              pt => particle_list(p)
-             if(max_vp < max(abs(pt%VXp(1)),abs(pt%VXp(2)),abs(pt%VXp(3)))) max_vp = max(abs(pt%VXp(1)),abs(pt%VXp(2)),abs(pt%VXp(3)))
+             if(max_vp < maxval(abs(pt%VXp(1:3)))) then
+                max_vp = maxval(abs(pt%VXp(1:3)))
+            end if
          end do !p
     end do    !b
     DT = 1e6
     do m = 1, nb_mat
-       mtype = mat_list(m)%MatType
-       if (mtype .ne.12)then         !The deformable body
-          E = mat_list(m)%Young
-          nu = mat_list(m)%Poisson
-          ro = mat_list(m)%Density
-          vv = sqrt(E*(1-nu)/(1+nu)/(1-2*nu)/ro)    ! sound speed
-          vv = max(vv,mat_list(m)%D)
-          vv = max(vv,mat_list(m)%Wavespd)
-          vv = vv + max_vp
-          DT = min(DT, DCell/vv)
-       end if
+        mtype = mat_list(m)%MatType
+        E = mat_list(m)%Young
+        nu = mat_list(m)%Poisson
+        ro = mat_list(m)%Density
+        vv = sqrt(E*(1-nu)/(1+nu)/(1-2*nu)/ro)    ! sound speed
+        vv = max(vv,mat_list(m)%D)
+        vv = max(vv,mat_list(m)%Wavespd)
+        vv = vv + max_vp
+        DT = min(DT, DCell/vv)
     end do
 
     DT = DT*DTscale
@@ -1982,7 +1982,7 @@ end do
      
     do n = 1,nb_gridnode
         gd => grid_list(comID, n)
-        if(gd%mapped == .true.) gd%Gpre = gd%Gpre/gd%GV_all
+        if(gd%mapped .eqv. .true.) gd%Gpre = gd%Gpre/gd%GV_all
     end do
      
   if(SGMP)then
@@ -2163,7 +2163,7 @@ end do
      
     do n = 1,nb_gridnode
         gd => grid_list(comID, n)
-        if(gd%mapped == .true.) gd%Gpre = gd%Gpre/gd%GV_all
+        if(gd%mapped .eqv. .true.) gd%Gpre = gd%Gpre/gd%GV_all
     end do
      
   if(SGMP)then
